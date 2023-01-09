@@ -10,3 +10,7 @@ class recipe(BaseModel):
     user_id:int = 1
     created_at:str = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     updated_at:str = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+
+class ingredient(BaseModel):
+    id:int
+    name:str
