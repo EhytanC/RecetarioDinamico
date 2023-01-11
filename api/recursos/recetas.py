@@ -1,7 +1,7 @@
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 from esquemas.models import recipe
-from recursos.recetas_ingredientes import transform_item
+from recursos.recetas_ingredientes import transform_item, ingredientes_receta
 from recursos.ingredientes import get_ingredients
 recipe_point = APIRouter()
 
@@ -9,10 +9,15 @@ df_recipes = pd.read_csv('../db/recipes_test.csv')
 
 @recipe_point.get('/recetas')
 def get_recetas(name: str|None=None,):
+    """
+    Obten las ultimas veiniticinco recetas añadidas
+    Parametros de query:
+        name=str -Busca las primeras veinticinco recetas que en su nombre contenga la cadena en name
+    """
     if name != None:
         df = df_recipes[df_recipes['name'].str.contains(name)].head(25)
     else:
-        df = df_recipes.tail()
+        df = df_recipes.tail(25)
     return df.to_dict('list')
 
 @recipe_point.get('/recetas/{id_receta}')
@@ -28,14 +33,12 @@ def get_recetas(id_receta:int, ingredientes:bool | bool = False):
     return df
 
 @recipe_point.post('/recetas', status_code=201)
-def post_recetas(info_recipe:recipe):
+def post_recetas(info_recipe:recipe, id_ingredientes:list[int]):
     
     df_recipes = pd.read_csv('../db/recipes_test.csv')
+    
     df = transform_item(info_recipe)
-
-    if df_recipes.empty:
-        df.to_csv('../db/recipes_test.csv', index=False)
-        return df.to_dict()
+    ingredientes_receta(df.loc[0,'id'],id_ingredientes)
     
     df = pd.concat([df_recipes, df])
     df.to_csv('../db/recipes_test.csv', index=False)
@@ -56,7 +59,6 @@ def delete_recetas(id_receta:int):
 def pull_recetas(info_recipe:recipe):
     df_recipes = pd.read_csv('../db/recipes_test.csv')
     recipe_query = dict(info_recipe)
-    print(recipe_query)
     id_query = df_recipes[df_recipes['id'] == recipe_query['id']].index.values
     
     for i in recipe_query:
